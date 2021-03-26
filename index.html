@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width= , initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.0.4/dist/tf.min.js"></script>
+    <script src="/mobilenet.min.js"></script>
+
+    <div id="status"></div>
+    <canvas id="c"></canvas>
+    <video style="opacity: 0;" id="v" playsinline autoplay muted"></video>
+    <style>
+        canvas,
+        html,
+        body {
+            height: 400px;
+            width: 400px;
+        }
+    </style>
+    <script>
+
+        (async () => {
+            const model = await mobilenet.load()
+            const video = document.getElementById('v')
+            const status = document.getElementById('status')
+            const canvas = document.getElementById('c')
+            const context = canvas.getContext('2d')
+
+            const stream = await navigator.mediaDevices.getDisplayMedia({
+                audio: false,
+                video: {
+                    facingMode: 'environment'
+                }
+            })
+            console.log(stream);
+
+            video.srcObject = stream
+
+            async function predict() {
+                canvas.width = document.body.clientWidth
+                canvas.height = document.body.clientHeight
+                context.drawImage(video, 0, 0, video.clientWidth, video.clientHeight, 0, 0, canvas.width, canvas.height)
+                const predictions = await model.classify(canvas);
+                status.innerHTML = `    ${predictions[0].className} `
+
+                requestAnimationFrame(predict)
+            }
+            predict()
+        })()
+    </script>
+</body>
+
+</html>
